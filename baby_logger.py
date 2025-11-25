@@ -1,5 +1,5 @@
 # Newborn Rhythm - Baby Care Logger
-# Version 0.3 - added buttons + append_event
+# Version 0.4 - added on-screen history list
 # Created by Mariana Vazquez
 
 import csv
@@ -74,11 +74,33 @@ class App(tk.Tk):
         )
         self.btn_sleep.pack(pady=8)
 
-        tk.Label(self, text="(Event saving not yet visible — will show history in Commit 4)",
-                 fg=self.fg, bg=self.bg, font=("Arial", 10, "italic")).pack(pady=10)
+        # --- HISTORY LABEL + LISTBOX ---
+        tk.Label(self, text="Recent events", fg=self.fg, bg=self.bg,
+                 font=("Arial", 12, "bold")).pack(pady=(12, 4))
 
-    def log(self, event_type):
+        self.history = tk.Listbox(
+            self, height=12, bg=self.btn, fg=self.fg,
+            font=("Consolas", 11), activestyle="none"
+        )
+        self.history.pack(fill="both", expand=True, padx=12, pady=6)
+
+        # Fill history when app starts
+        self.refresh_history()
+
+    def log(self, event_type: str):
+        """Log a new event and refresh the list on screen."""
         append_event(event_type)
+        self.refresh_history()
+
+    def refresh_history(self):
+        """Reload the last 10 events from the CSV into the listbox."""
+        self.history.delete(0, tk.END)
+        rows = read_events()
+        last_rows = rows[-10:]  # show only last 10 events
+        for r in last_rows:
+            ts = r["timestamp_iso"].replace("T", " ")
+            line = f"{ts}  •  {r['event_type']}"
+            self.history.insert(tk.END, line)
 
 if __name__ == "__main__":
     ensure_csv()
