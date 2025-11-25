@@ -1,5 +1,5 @@
 # Newborn Rhythm - Baby Care Logger
-# Version 0.5 - added since-last-feed timer
+# Version 0.6 - added sleep start/end toggle
 # Created by Mariana Vazquez
 
 import csv
@@ -37,7 +37,6 @@ def append_event(kind):
 def since_last_feed_str():
     """Return a readable 'since last feed' time string."""
     rows = read_events()
-    # Look backwards for most recent feed
     for r in reversed(rows):
         if r["event_type"] == "feed":
             t = datetime.fromisoformat(r["timestamp_iso"])
@@ -63,22 +62,28 @@ class App(tk.Tk):
         self.bg = "#111111"
         self.btn = "#222222"
 
+        # Track sleep state
+        self.sleeping = False
+
         # Title
         tk.Label(self, text="Newborn Rhythm", fg=self.fg, bg=self.bg,
                  font=("Arial", 18, "bold")).pack(pady=10)
 
-        # Buttons
+        # Feed Button
         tk.Button(self, text="FEED", bg=self.btn, fg=self.fg,
                   font=("Arial", 18, "bold"), width=18, height=2,
                   command=lambda: self.log("feed")).pack(pady=8)
 
+        # Diaper Button
         tk.Button(self, text="DIAPER", bg=self.btn, fg=self.fg,
                   font=("Arial", 18, "bold"), width=18, height=2,
                   command=lambda: self.log("diaper")).pack(pady=8)
 
-        tk.Button(self, text="SLEEP START", bg=self.btn, fg=self.fg,
-                  font=("Arial", 18, "bold"), width=18, height=2,
-                  command=lambda: self.log("sleep_start")).pack(pady=8)
+        # Sleep Toggle Button
+        self.sleep_btn = tk.Button(self, text="SLEEP START", bg=self.btn, fg=self.fg,
+                                   font=("Arial", 18, "bold"), width=18, height=2,
+                                   command=self.toggle_sleep)
+        self.sleep_btn.pack(pady=8)
 
         # Since-last-feed label
         self.since_label = tk.Label(
@@ -87,7 +92,7 @@ class App(tk.Tk):
         )
         self.since_label.pack(pady=6)
 
-        # History section
+        # History
         tk.Label(self, text="Recent events", fg=self.fg, bg=self.bg,
                  font=("Arial", 12, "bold")).pack(pady=(12, 4))
 
@@ -102,6 +107,19 @@ class App(tk.Tk):
     def log(self, event_type: str):
         """Log event then refresh timer + history."""
         append_event(event_type)
+        self.refresh_all()
+
+    def toggle_sleep(self):
+        """Toggle between sleep_start and sleep_end."""
+        if self.sleeping:
+            append_event("sleep_end")
+            self.sleep_btn.config(text="SLEEP START")
+            self.sleeping = False
+        else:
+            append_event("sleep_start")
+            self.sleep_btn.config(text="SLEEP END")
+            self.sleeping = True
+
         self.refresh_all()
 
     def refresh_all(self):
@@ -121,4 +139,3 @@ class App(tk.Tk):
 if __name__ == "__main__":
     ensure_csv()
     App().mainloop()
-
